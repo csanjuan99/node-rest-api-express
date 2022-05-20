@@ -3,15 +3,15 @@ let products = [];
 
 for (let i = 0; i < 100; i++) {
   const product = {
-    id: i,
+    id: faker.datatype.uuid(),
     name: faker.commerce.productName(),
-    price: faker.commerce.price(),
+    price: parseInt(faker.commerce.price()),
     description: faker.lorem.sentence(),
     image: faker.image.imageUrl(),
+    isVisible: faker.datatype.boolean(),
   };
   products.push(product);
 }
 
-module.exports = {
-  products,
-}
+
+module.exports = { products };

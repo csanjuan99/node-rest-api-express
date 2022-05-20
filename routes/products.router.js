@@ -1,56 +1,54 @@
-const {
-  products
-} = require('../helpers/products');
 const express = require('express');
+const ProductsServices = require('../services/product.service');
+const validateHandler = require('../middlewares/validator.handler');
+const {
+  getProductsSchema,
+  createProductSchema,
+  updateProductSchema
+} = require('../schemas/product.schema');
 const router = express.Router();
+const service = new ProductsServices();
 
-router.get('/', (req, res) => {
-  res.json(products);
+router.get('/', async (req, res) => {
+  try {
+    res.json(await service.readAll());
+  } catch (error) {
+    res.status(400).json({
+      msg: 'Not found'
+    });
+  }
 });
 
-router.post('/', (req, res) => {
-  const body = req.body;
-  res.status(201).json({
-    message: 'Product created',
-    data: body
-  })
-});
+router.post('/',
+  validateHandler(createProductSchema, 'body'),
+  async (req, res) => {
+    const body = req.body;
+    res.status(201).json(await service.create(body));
+  });
 
-router.get('/:id', (req, res) => {
-  const product = products.find(product => product.id === parseInt(req.params.id));
-  if (!product) return res.status(404).json({
-    msg: 'Product not found'
+router.get('/:id',
+  validateHandler(getProductsSchema, 'params'),
+  async (req, res, next) => {
+    try {
+      res.status(200).json(await service.readOne(req.params.id));
+    } catch (error) {
+      next(error);
+    }
   });
-  res.json(product);
-});
 
-router.patch('/:id', (req, res) => {
-  const product = products.find(product => product.id === parseInt(req.params.id));
-  if (!product) return res.status(404).json({
-    msg: 'Product not found'
+router.patch('/:id',
+  validateHandler(getProductsSchema, 'params'),
+  validateHandler(updateProductSchema, 'body'),
+  async (req, res, next) => {
+    try {
+      res.json(await service.update(req.params.id, req.body));
+    } catch (error) {
+      next(error);
+    }
   });
-  const {
-    name,
-    price
-  } = req.body;
-  product.name = name;
-  product.price = price;
-  res.json({
-    message: 'Product updated',
-    data: product
-  });
-});
 
-router.delete('/:id', (req, res) => {
-  const product = products.find(product => product.id === parseInt(req.params.id));
-  if (!product) return res.status(404).json({
-    msg: 'Product not found'
-  });
-  products.splice(products.indexOf(product), 1);
-  res.json({
-    message: 'Product deleted',
-    data: product
-  });
+router.delete('/:id', async (req, res) => {
+  res.status(200).json(await service.delete(req.params.id));
 });
 
 module.exports = router;
